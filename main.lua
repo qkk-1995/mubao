@@ -7,8 +7,14 @@
 require("TSLib")
 local image = require("tsimg")  
 local ts = require("ts")
-local 挖宝数
-local startTime
+local InterVal  = 500
+local RunTime 	= 0
+local StartTime
+local UsedTime
+local Map ={}
+local x,y
+local stack = {}
+local top = 0
 local wall = 	{
 					{5850916,5850916,5850916},
 					{5850916,5850916,5850916},
@@ -318,6 +324,7 @@ function TryGo(oldMap22,oldMap55,dirNeed,Type)
 		times = 100
 	elseif (flag)
 	then
+               toast("钥匙",1)
 		mSleep(2000)
 	end
 	for i = 0,times,1 do
@@ -348,10 +355,12 @@ function TryGo(oldMap22,oldMap55,dirNeed,Type)
 		then
 			if (IsSame(oldMap22,newMap22,dirNeed) == 1)
 			then
+                              mSleep(250)
 				break
 			end
 			if (i == 1 or i == 3 or i == 4) then
 				Move(dirNeed)
+                              mSleep(250)
 			end
 		elseif (dir == 0)
 		then
@@ -359,7 +368,7 @@ function TryGo(oldMap22,oldMap55,dirNeed,Type)
 			--dialog("dir = 0",0);
 		else
 			--游戏bug 角色漂移=1
-			mSleep(1500)
+			mSleep(500)
 			cnt = cnt + 1
 			if (cnt >= 2)
 			then
@@ -378,6 +387,8 @@ function TryGo(oldMap22,oldMap55,dirNeed,Type)
 				then
 					TryGo(newMap22 , newMap55,3)
 				end
+                             Move(dirNeed)
+                             mSleep(250)
 			end
 		end
 	end
@@ -456,33 +467,20 @@ function RunOnce()
 	local old22
 	local old55
 	local Map55
-	local stack = {}
-	local top = 0
-	local Map ={}
-	local x,y
+
+	
 	local dirNeed
 	local str
 	local backflag
 	local MyType
 	local str
-	x = 0
-	y = 0
-	for i=-100,100,1 do
-		Map[i] = {}
-		for j=-100,100,1 do
-		Map[i][j] = 0
-		end
-	end
-	stack[top] = 0
-	top = top + 1
+	
 	local ttmp = Get5x5Type()
 	old55 = ttmp[1]
 	old22 = ttmp[2] 
 	while (true) do
 		tt = ts.ms() - startTime
-		str = "本次运行时间:"..(math.ceil(tt)).."s\n"
-		str = str.."运行次数:"..挖宝数.."次"
-		toast(str,0.5); 
+
 		if (tt > 6 * 60) then
 			exit()
 			lua_restart()
@@ -529,6 +527,7 @@ function RunOnce()
 			then
 				break
 			else
+                              dialog("try again",0)
 				RunOnce()
 				break
 			end
@@ -587,7 +586,6 @@ function RunOnce()
 	end
 end
 function checkAppFront()
-	mSleep(3000)
 	flag = isFrontApp("com.sxd.graveroguelike")
 	if (flag == 0)
 	then
@@ -622,17 +620,43 @@ function checkAppFront()
 		end	
 	end
 end		
+
 init(0)
 ts.config.open("/var/coc.plist")
-挖宝数 = ts.config.get("挖宝数")     
+MyTimes = ts.config.get("MyTimes")     
 ts.config.close(true)
-
+mSleep(3000)
 checkAppFront()
 enter()
-startTime = ts.ms() 
-RunOnce()
-exit()
+x = 0
+y = 0
+for i=-100,100,1 do
+	Map[i] = {}
+	for j=-100,100,1 do
+	Map[i][j] = 0
+	end
+end
+stack[top] = 0
+top = top + 1
+	
+RunTime = ts.ms()
+while (true) do
+	StartTime = ts.ms()
+	RunOnce()
+	UsedTime = ts.ms() - StartTime
+	str = "本次运行时间:"..(math.ceil(ts.ms()-RunTime)).."s\n"
+	str = str.."本周期运行时间:"..(UsedTime).."s\"
+	str = str.."运行次数:"..MyTimes.."次"
+	toast(str,0.5); 
+	if (InterVal > UsedTime) then
+		mSleep(InterVal - UsedTime)
+	else
+		dialog("Process time to long", 0)
+	end
+end
 ts.config.open("/var/coc.plist")
-ts.config.save("挖宝数",挖宝数)       
+ts.config.save("MyTimes",MyTimes)       
 ts.config.close(true)     
+exit()
 lua_restart()
+
